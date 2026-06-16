@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChopeTaGoss</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0e1117;
+  --surface:  #161b27;
+  --card:     #1c2333;
+  --border:   #252e42;
+  --text:     #e6eaf2;
+  --muted:    #6b7a99;
+  --green:    #25d366;
+  --green2:   #128c4e;
+  --blue:     #4f8ef7;
+  --blue-dim: #1a2e5c;
+  --red:      #e05555;
+  --orange:   #f0a044;
+  --radius:   14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden;}
+
+/* ── AUTH ── */
+#auth{display:flex;align-items:center;justify-content:center;height:100dvh;padding:20px;background:radial-gradient(ellipse at 40% 20%,#1a2540,var(--bg) 65%);}
+.auth-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 32px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,.5);}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+.auth-logo .ico{width:40px;height:40px;background:var(--green);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.auth-logo h1{font-size:20px;font-weight:700;}
+.auth-logo h1 span{color:var(--green);}
+.tabs{display:flex;gap:4px;background:var(--bg);border-radius:10px;padding:4px;margin-bottom:24px;}
+.tab{flex:1;padding:8px;border:none;background:transparent;color:var(--muted);border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;}
+.tab.active{background:var(--green);color:#fff;}
+.fg{margin-bottom:14px;}
+.fg label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;}
+.fg input{width:100%;padding:11px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;}
+.fg input:focus{border-color:var(--green);}
+.btn-main{width:100%;padding:12px;background:var(--green);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:filter .2s;}
+.btn-main:hover{filter:brightness(1.08);}
+.btn-main:disabled{opacity:.5;cursor:not-allowed;}
+.auth-err{background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.3);color:var(--red);padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px;display:none;}
+
+/* ── APP LAYOUT ── */
+#app{display:none;height:100dvh;flex-direction:column;}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;}
+.topbar-title{font-size:16px;font-weight:700;}
+.topbar-title span{color:var(--green);}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.badge-role{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;padding:3px 8px;border-radius:20px;background:rgba(37,211,102,.12);color:var(--green);border:1px solid rgba(37,211,102,.25);}
+.badge-role.admin{background:rgba(240,160,68,.12);color:var(--orange);border-color:rgba(240,160,68,.25);}
+.btn-logout{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;padding:5px 11px;border-radius:7px;cursor:pointer;font-family:inherit;}
+.btn-logout:hover{color:var(--red);border-color:var(--red);}
+
+/* ── MAIN AREA ── */
+.main{flex:1;display:flex;overflow:hidden;}
+
+/* ── SIDEBAR (admin only) ── */
+.sidebar{width:300px;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface);flex-shrink:0;}
+.sidebar-head{padding:14px 16px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;}
+.conv-list{flex:1;overflow-y:auto;}
+.conv-item{padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:12px;}
+.conv-item:hover{background:var(--card);}
+.conv-item.active{background:var(--card);border-right:2px solid var(--green);}
+.conv-avatar{width:40px;height:40px;border-radius:50%;background:var(--blue-dim);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background:linear-gradient(135deg,#1a3a7c,#0e2050);}
+.conv-info{flex:1;min-width:0;}
+.conv-email{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.conv-preview{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.conv-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.conv-time{font-size:10px;color:var(--muted);}
+.unread-dot{width:8px;height:8px;background:var(--green);border-radius:50%;}
+
+/* ── CHAT AREA ── */
+.chat-area{flex:1;display:flex;flex-direction:column;min-width:0;}
+.chat-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--surface);flex-shrink:0;}
+.chat-header .avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1a3a7c,#0e2050);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.chat-header-info{flex:1;}
+.chat-header-name{font-size:14px;font-weight:700;}
+.chat-header-status{font-size:12px;color:var(--green);display:flex;align-items:center;gap:5px;}
+.dot-live{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(37,211,102,.4);}70%{box-shadow:0 0 0 5px rgba(37,211,102,0);}100%{box-shadow:0 0 0 0 rgba(37,211,102,0);}}
+
+/* ORDER STATUS CARD in header */
+.order-status-bar{padding:8px 16px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;}
+.status-chip{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+.chip-pending {background:rgba(240,160,68,.15);color:var(--orange);border:1px solid rgba(240,160,68,.3);}
+.chip-accepted{background:rgba(37,211,102,.12);color:var(--green);border:1px solid rgba(37,211,102,.3);}
+.chip-refused {background:rgba(224,85,85,.12);color:var(--red);border:1px solid rgba(224,85,85,.3);}
+.chip-shipped {background:rgba(79,142,247,.12);color:var(--blue);border:1px solid rgba(79,142,247,.3);}
+.status-bar-label{font-size:11px;color:var(--muted);}
+.status-bar-qty{font-size:13px;font-weight:700;color:var(--text);}
+
+/* ── MESSAGES ── */
+.messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth;}
+.msg-row{display:flex;flex-direction:column;max-width:72%;}
+.msg-row.me{align-self:flex-end;align-items:flex-end;}
+.msg-row.them{align-self:flex-start;align-items:flex-start;}
+.msg-bubble{padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;word-break:break-word;}
+.msg-row.me   .msg-bubble{background:var(--green2);color:#fff;border-bottom-right-radius:4px;}
+.msg-row.them .msg-bubble{background:var(--card);color:var(--text);border-bottom-left-radius:4px;}
+.msg-bubble.system{background:rgba(79,142,247,.1);color:var(--blue);border:1px solid rgba(79,142,247,.2);border-radius:10px;font-size:12px;text-align:center;padding:7px 14px;}
+.msg-time{font-size:10px;color:var(--muted);margin-top:3px;padding:0 4px;}
+.msg-sender{font-size:10px;color:var(--muted);margin-bottom:2px;padding:0 4px;}
+
+/* ── INPUT BAR ── */
+.input-bar{padding:12px 16px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+
+/* CLIENT simple input */
+.client-input-wrap{display:flex;align-items:center;gap:10px;}
+.gram-hint{font-size:12px;color:var(--muted);margin-bottom:6px;}
+.client-input-wrap input{flex:1;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:25px;color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;}
+.client-input-wrap input:focus{border-color:var(--green);}
+.btn-send{width:44px;height:44px;border-radius:50%;background:var(--green);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:filter .2s;}
+.btn-send:hover{filter:brightness(1.1);}
+.btn-send:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ADMIN input + actions */
+.admin-actions{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap;}
+.act-btn{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit;transition:all .2s;}
+.act-accept{background:rgba(37,211,102,.15);color:var(--green);border:1px solid rgba(37,211,102,.3);}
+.act-ship  {background:rgba(79,142,247,.15);color:var(--blue); border:1px solid rgba(79,142,247,.3);}
+.act-refuse{background:rgba(224,85,85,.15); color:var(--red);  border:1px solid rgba(224,85,85,.3);}
+.act-accept:hover{background:rgba(37,211,102,.3);}
+.act-ship:hover  {background:rgba(79,142,247,.3);}
+.act-refuse:hover{background:rgba(224,85,85,.3);}
+.admin-msg-wrap{display:flex;gap:8px;align-items:center;}
+.admin-msg-wrap input{flex:1;padding:11px 16px;background:var(--card);border:1px solid var(--border);border-radius:25px;color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;}
+.admin-msg-wrap input:focus{border-color:var(--green);}
+
+/* Empty state */
+.empty-chat{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:12px;}
+.empty-chat .ico{font-size:48px;}
+.empty-chat p{font-size:14px;}
+.no-conv{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:10px;}
+.no-conv .ico{font-size:40px;}
+
+/* DEBUG */
+#debug-toggle{position:fixed;bottom:18px;left:18px;width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;z-index:9000;box-shadow:0 2px 12px rgba(0,0,0,.4);}
+#debug-panel{position:fixed;bottom:64px;left:14px;width:400px;max-width:calc(100vw - 28px);background:#080a0d;border:1px solid var(--border);border-radius:12px;z-index:9001;box-shadow:0 8px 30px rgba(0,0,0,.6);font-family:monospace;overflow:hidden;}
+#debug-header{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--surface);border-bottom:1px solid var(--border);font-size:12px;font-weight:700;font-family:'Inter',sans-serif;}
+#debug-header button{background:var(--card);border:1px solid var(--border);color:var(--muted);font-size:11px;padding:3px 9px;border-radius:5px;cursor:pointer;}
+#debug-logs{padding:8px 12px;max-height:260px;overflow-y:auto;font-size:11px;line-height:1.6;}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:7px;z-index:9999;}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:11px 16px;font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:slideIn .25s ease;display:flex;align-items:center;gap:8px;max-width:300px;}
+.toast.s{border-color:#128c4e;color:var(--green);}
+.toast.e{border-color:#6b1f1f;color:var(--red);}
+.toast.i{border-color:var(--blue-dim);color:var(--blue);}
+@keyframes slideIn{from{transform:translateX(30px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* Spinner */
+.spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:rot .6s linear infinite;}
+@keyframes rot{to{transform:rotate(360deg);}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+
+/* Mobile */
+@media(max-width:640px){
+  .sidebar{width:100%;position:absolute;inset:0;z-index:10;transform:translateX(-100%);transition:transform .25s;}
+  .sidebar.open{transform:translateX(0);}
+  .chat-area{width:100%;}
+  #back-btn{display:flex !important;}
+}
+#back-btn{display:none;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:0 6px 0 0;}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="ico">🌿</div>
+      <h1>Chope<span>TaGoss</span></h1>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login')">Connexion</button>
+      <button class="tab" onclick="switchTab('register')">Inscription</button>
+    </div>
+    <div id="tab-login">
+      <div class="fg"><label>Email</label><input type="email" id="li-email" placeholder="ton@email.com"></div>
+      <div class="fg"><label>Mot de passe</label><input type="password" id="li-pw" placeholder="••••••••"></div>
+      <button class="btn-main" id="btn-li" onclick="doLogin()">Se connecter</button>
+    </div>
+    <div id="tab-reg" style="display:none">
+      <div class="fg"><label>Email</label><input type="email" id="reg-email" placeholder="ton@email.com"></div>
+      <div class="fg"><label>Mot de passe</label><input type="password" id="reg-pw" placeholder="Min. 6 caractères"></div>
+      <button class="btn-main" id="btn-reg" onclick="doRegister()">Créer mon compte</button>
+    </div>
+    <div class="auth-err" id="auth-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;height:100dvh;flex-direction:column;">
+  <div class="topbar">
+    <div class="topbar-title">🌿 Chope<span>TaGoss</span></div>
+    <div class="topbar-right">
+      <span class="badge-role" id="role-badge">Client</span>
+      <button class="btn-logout" onclick="doLogout()">✕ Quitter</button>
+    </div>
+  </div>
+  <div class="main" id="main-area">
+    <!-- injected by JS -->
+  </div>
+</div>
+
+<!-- DEBUG -->
+<div id="debug-toggle" onclick="toggleDbg()">🐛</div>
+<div id="debug-panel" style="display:none">
+  <div id="debug-header"><span>🐛 Debug</span><div style="display:flex;gap:6px;"><button onclick="clearDbg()">Vider</button><button onclick="toggleDbg()">✕</button></div></div>
+  <div id="debug-logs"></div>
+</div>
+<div class="toast-wrap" id="toasts"></div>
+
+<script type="module">
+import { initializeApp }                           from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+                                                   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, addDoc, query, where, orderBy,
+         onSnapshot, updateDoc, serverTimestamp, getDocs, getDoc, limit }
+                                                   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ── CONFIG ──────────────────────────────────────────────────
+const FIREBASE = {
+  apiKey:            "AIzaSyBwHZRzYFBKb24kOoy910-SzyzVTuMI8ds",
+  authDomain:        "chopetacons-79798.firebaseapp.com",
+  projectId:         "chopetacons-79798",
+  storageBucket:     "chopetacons-79798.firebasestorage.app",
+  messagingSenderId: "42152508504",
+  appId:             "1:42152508504:web:784317ccb2922207bb1e2d"
+};
+const ADMIN_EMAIL = "lvinet@myyahoo.com";
+
+const firebase = initializeApp(FIREBASE);
+const auth     = getAuth(firebase);
+const db       = getFirestore(firebase);
+
+// ── STATE ────────────────────────────────────────────────────
+let me            = null;   // current user
+let isAdmin       = false;
+let uiReady       = false;
+let selectedConv  = null;   // admin: selected userId
+let unsubConvs    = null;
+let unsubMsgs     = null;
+let currentOrder  = null;   // client's active order
+
+// ── DEBUG ────────────────────────────────────────────────────
+const logs = [];
+window.dbg = (m, t='info') => {
+  logs.unshift({ m, t, ts: new Date().toLocaleTimeString('fr-FR') });
+  if (logs.length > 60) logs.pop();
+  const el = document.getElementById('debug-logs');
+  if (el) el.innerHTML = logs.map(l => {
+    const c = {info:'#4f8ef7',success:'#25d366',error:'#e05555',warn:'#f0a044'}[l.t]||'#e6eaf2';
+    return `<div style="padding:3px 0;border-bottom:1px solid #111;"><span style="color:#6b7a99">${l.ts}</span> <span style="color:${c}">[${l.t}]</span> ${l.m}</div>`;
+  }).join('');
+  console.log(`[${t}]`, m);
+};
+window.toggleDbg = () => { const p=document.getElementById('debug-panel'); p.style.display=p.style.display==='none'?'block':'none'; };
+window.clearDbg  = () => { logs.length=0; document.getElementById('debug-logs').innerHTML=''; };
+
+setTimeout(()=>dbg(`Firebase OK — projet : ${FIREBASE.projectId}`,'success'), 80);
+
+// ── TOAST ────────────────────────────────────────────────────
+window.toast = (msg, t='i') => {
+  const w  = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${t}`;
+  el.innerHTML = ({s:'✅',e:'❌',i:'ℹ️'}[t]||'') + ' ' + msg;
+  w.appendChild(el);
+  setTimeout(()=>el.remove(), 3200);
+};
+
+// ── AUTH UI ──────────────────────────────────────────────────
+window.switchTab = tab => {
+  document.getElementById('tab-login').style.display = tab==='login' ? '' : 'none';
+  document.getElementById('tab-reg').style.display   = tab==='reg'   ? '' : 'none';
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',(tab==='login'&&i===0)||(tab==='reg'&&i===1)));
+  document.getElementById('auth-err').style.display = 'none';
+};
+function authErr(msg){ const e=document.getElementById('auth-err'); e.textContent=msg; e.style.display='block'; dbg(msg,'error'); }
+function resetBtn(id,label){ const b=document.getElementById(id); if(b){b.disabled=false;b.textContent=label;} }
+function friendlyErr(code){
+  return({'auth/wrong-password':'Mot de passe incorrect.','auth/user-not-found':'Aucun compte avec cet email.',
+   'auth/email-already-in-use':'Email déjà utilisé.','auth/invalid-email':'Email invalide.',
+   'auth/weak-password':'Mot de passe trop faible.','auth/invalid-credential':'Email ou mot de passe incorrect.',
+   'auth/network-request-failed':'Problème réseau.','auth/too-many-requests':'Trop de tentatives.'}[code]||`Erreur: ${code}`);
+}
+
+// ── LOGIN ────────────────────────────────────────────────────
+window.doLogin = async () => {
+  const email = document.getElementById('li-email').value.trim();
+  const pw    = document.getElementById('li-pw').value;
+  if(!email||!pw) return authErr('Remplis tous les champs.');
+  const btn = document.getElementById('btn-li');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+  dbg(`Login: ${email}`,'info');
+  try {
+    await signInWithEmailAndPassword(auth, email, pw);
+    dbg('Login OK','success');
+  } catch(e) {
+    dbg(`Login erreur: ${e.code}`,'error');
+    authErr(friendlyErr(e.code));
+    resetBtn('btn-li','Se connecter');
+  }
+};
+
+// ── REGISTER ─────────────────────────────────────────────────
+window.doRegister = async () => {
+  const email = document.getElementById('reg-email').value.trim();
+  const pw    = document.getElementById('reg-pw').value;
+  if(!email||!pw) return authErr('Remplis tous les champs.');
+  if(pw.length<6) return authErr('Mot de passe trop court (min 6).');
+  const btn = document.getElementById('btn-reg');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Création...';
+  dbg(`Inscription: ${email}`,'info');
+
+  // Timeout failsafe 7s
+  const tmo = setTimeout(()=>{
+    dbg('Timeout — vérif manuelle currentUser...','warn');
+    const u = auth.currentUser;
+    if(u){ dbg(`currentUser dispo: ${u.email}`,'success'); loadApp(u); }
+    else { authErr('Compte créé mais connexion bloquée. Ajoute ton domaine dans Firebase Auth → Authorized domains puis reconnecte-toi.'); resetBtn('btn-reg','Créer mon compte'); }
+  }, 7000);
+
+  try {
+    dbg('createUserWithEmailAndPassword...','info');
+    const cred = await createUserWithEmailAndPassword(auth, email, pw);
+    clearTimeout(tmo);
+    dbg(`UID: ${cred.user.uid}`,'success');
+    // profil Firestore non-bloquant
+    saveProfile(cred.user).catch(e=>dbg(`profil Firestore ignoré: ${e.message}`,'warn'));
+  } catch(e) {
+    clearTimeout(tmo);
+    if(auth.currentUser?.email===email){ dbg('catch mais user dispo','warn'); loadApp(auth.currentUser); return; }
+    dbg(`Erreur inscription: ${e.code}`,'error');
+    authErr(friendlyErr(e.code));
+    resetBtn('btn-reg','Créer mon compte');
+  }
+};
+
+window.doLogout = async () => {
+  cleanup();
+  await signOut(auth);
+};
+
+// ── AUTH STATE ───────────────────────────────────────────────
+onAuthStateChanged(auth, user => {
+  dbg(`onAuthStateChanged: ${user?user.email:'null'}`,'info');
+  if(user){ loadApp(user); }
+  else    { cleanup(); document.getElementById('auth').style.display='flex'; document.getElementById('app').style.display='none'; uiReady=false; }
+});
+
+function cleanup(){
+  if(unsubConvs){ unsubConvs(); unsubConvs=null; }
+  if(unsubMsgs) { unsubMsgs();  unsubMsgs=null;  }
+  selectedConv=null; currentOrder=null; uiReady=false;
+}
+
+// ── SAVE PROFILE ─────────────────────────────────────────────
+async function saveProfile(user){
+  await setDoc(doc(db,'users',user.uid),{
+    uid:user.uid, email:user.email,
+    role: user.email===ADMIN_EMAIL?'admin':'client',
+    updatedAt: serverTimestamp()
+  },{merge:true});
+}
+
+// ── LOAD APP ─────────────────────────────────────────────────
+function loadApp(user){
+  if(uiReady && me?.uid===user.uid) return;
+  uiReady=true; me=user;
+  isAdmin = user.email===ADMIN_EMAIL;
+  dbg(`Rôle: ${isAdmin?'ADMIN':'CLIENT'}`,'success');
+
+  saveProfile(user).catch(()=>{});
+
+  document.getElementById('auth').style.display='none';
+  const appEl = document.getElementById('app');
+  appEl.style.display='flex';
+
+  const badge = document.getElementById('role-badge');
+  badge.textContent = isAdmin ? '👑 Admin' : '🙋 Client';
+  if(isAdmin) badge.classList.add('admin');
+
+  if(isAdmin) buildAdminUI();
+  else        buildClientUI();
+}
+
+// ════════════════════════════════════════════════════════════
+// ── CLIENT UI ───────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+function buildClientUI(){
+  dbg('Build client UI','info');
+  const main = document.getElementById('main-area');
+  main.innerHTML = `
+    <div class="chat-area" style="display:flex;flex-direction:column;width:100%;">
+      <div class="chat-header">
+        <div class="avatar">🌿</div>
+        <div class="chat-header-info">
+          <div class="chat-header-name">ChopeTaGoss</div>
+          <div class="chat-header-status"><span class="dot-live"></span> En ligne</div>
+        </div>
+      </div>
+      <div id="client-status-bar" class="order-status-bar" style="display:none;"></div>
+      <div class="messages" id="client-msgs">
+        <div class="empty-chat"><div class="ico">💬</div><p>Envoie ta commande en grammes ci-dessous</p></div>
+      </div>
+      <div class="input-bar">
+        <div class="gram-hint">💡 Tape le nombre de grammes que tu veux commander</div>
+        <div class="client-input-wrap">
+          <input type="number" id="client-input" placeholder="Ex: 5" min="1" max="1000">
+          <button class="btn-send" id="btn-client-send" onclick="clientSend()">➤</button>
+        </div>
+      </div>
+    </div>`;
+
+  // Écouter les messages de ce client
+  listenClientMessages();
+
+  // Enter key
+  document.getElementById('client-input').addEventListener('keydown', e=>{ if(e.key==='Enter') clientSend(); });
+}
+
+function listenClientMessages(){
+  dbg('Écoute messages client','info');
+  // On écoute la conversation de ce client (collection messages avec clientId = me.uid)
+  const q = query(
+    collection(db,'conversations',me.uid,'messages'),
+    orderBy('createdAt','asc')
+  );
+  if(unsubMsgs){ unsubMsgs(); }
+  unsubMsgs = onSnapshot(q, snap => {
+    dbg(`Messages reçus: ${snap.docs.length}`,'info');
+    renderClientMessages(snap.docs.map(d=>({id:d.id,...d.data()})));
+  }, e => {
+    dbg(`Erreur messages: ${e.message}`,'error');
+    if(e.code==='permission-denied') toast('Vérifie les règles Firestore','e');
+  });
+
+  // Écouter la commande active
+  const oq = query(
+    collection(db,'orders'),
+    where('userId','==',me.uid),
+    orderBy('createdAt','desc'),
+    limit(1)
+  );
+  onSnapshot(oq, snap => {
+    if(!snap.empty){
+      currentOrder = {id:snap.docs[0].id, ...snap.docs[0].data()};
+      renderClientStatusBar();
+    }
+  });
+}
+
+function renderClientStatusBar(){
+  const bar = document.getElementById('client-status-bar');
+  if(!bar||!currentOrder) return;
+  const labels = {pending:'⏳ En attente',accepted:'✅ Acceptée',refused:'❌ Refusée',shipped:'📦 Livrée'};
+  const cls    = {pending:'chip-pending',accepted:'chip-accepted',refused:'chip-refused',shipped:'chip-shipped'};
+  bar.style.display='flex';
+  bar.innerHTML=`
+    <span class="status-bar-label">Dernière commande :</span>
+    <span class="status-bar-qty">${currentOrder.quantity}g</span>
+    <span class="status-chip ${cls[currentOrder.status]||'chip-pending'}">${labels[currentOrder.status]||currentOrder.status}</span>`;
+}
+
+function renderClientMessages(msgs){
+  const box = document.getElementById('client-msgs');
+  if(!box) return;
+  if(!msgs.length){
+    box.innerHTML='<div class="empty-chat"><div class="ico">💬</div><p>Envoie ta commande en grammes ci-dessous</p></div>';
+    return;
+  }
+  box.innerHTML = msgs.map(m => {
+    const isMe   = m.senderId === me.uid;
+    const isSystem = m.type==='system';
+    const time   = m.createdAt?.toDate ? m.createdAt.toDate().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    if(isSystem){
+      return `<div class="msg-row" style="align-self:center;max-width:85%;">
+        <div class="msg-bubble system">${esc(m.text)}</div>
+        <div class="msg-time" style="text-align:center;">${time}</div>
+      </div>`;
+    }
+    return `<div class="msg-row ${isMe?'me':'them'}">
+      ${!isMe?`<div class="msg-sender">🌿 ChopeTaGoss</div>`:''}
+      <div class="msg-bubble">${esc(m.text)}</div>
+      <div class="msg-time">${time}</div>
+    </div>`;
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+window.clientSend = async () => {
+  const input = document.getElementById('client-input');
+  const raw   = input.value.trim();
+  const grams = parseFloat(raw);
+  if(!raw || isNaN(grams) || grams<=0) return toast('Entre un nombre de grammes valide','e');
+
+  const btn = document.getElementById('btn-client-send');
+  btn.disabled=true;
+  input.value='';
+
+  const text = `${grams}g`;
+  dbg(`Client envoie: ${text}`,'info');
+
+  try {
+    // 1. Créer / mettre à jour la commande
+    const orderRef = await addDoc(collection(db,'orders'),{
+      userId:    me.uid,
+      userEmail: me.email,
+      quantity:  grams,
+      status:    'pending',
+      createdAt: serverTimestamp()
+    });
+    dbg(`Commande créée: ${orderRef.id}`,'success');
+
+    // 2. Ajouter le message dans la conversation
+    await addDoc(collection(db,'conversations',me.uid,'messages'),{
+      text,
+      senderId:  me.uid,
+      senderEmail: me.email,
+      type:      'order',
+      orderId:   orderRef.id,
+      createdAt: serverTimestamp()
+    });
+
+    // 3. Mettre à jour le doc de conversation (pour la liste admin)
+    await setDoc(doc(db,'conversations',me.uid),{
+      clientId:    me.uid,
+      clientEmail: me.email,
+      lastMessage: text,
+      lastAt:      serverTimestamp(),
+      status:      'pending'
+    },{merge:true});
+
+    dbg('Message envoyé OK','success');
+    toast('Commande envoyée !','s');
+  } catch(e){
+    dbg(`Erreur envoi: ${e.message}`,'error');
+    toast('Erreur envoi. Vérifie les règles Firestore.','e');
+  }
+  btn.disabled=false;
+};
+
+// ════════════════════════════════════════════════════════════
+// ── ADMIN UI ────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+function buildAdminUI(){
+  dbg('Build admin UI','info');
+  const main = document.getElementById('main-area');
+  main.style.display='flex';
+  main.innerHTML = `
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <span>💬 Conversations</span>
+        <span id="conv-count" style="color:var(--text);font-size:13px;">0</span>
+      </div>
+      <div class="conv-list" id="conv-list">
+        <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">Aucune conversation</div>
+      </div>
+    </div>
+    <div class="chat-area" id="chat-area" style="display:flex;flex-direction:column;">
+      <div class="no-conv" id="no-conv">
+        <div class="ico">👈</div>
+        <p>Sélectionne une conversation</p>
+      </div>
+      <div id="active-chat" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+        <div class="chat-header" id="admin-chat-header">
+          <button id="back-btn" onclick="closeSidebar()">‹</button>
+          <div class="avatar">👤</div>
+          <div class="chat-header-info">
+            <div class="chat-header-name" id="admin-chat-name">—</div>
+            <div class="chat-header-status"><span class="dot-live"></span> En ligne</div>
+          </div>
+          <div id="admin-order-chip" style="margin-left:auto;"></div>
+        </div>
+        <div class="messages" id="admin-msgs"></div>
+        <div class="input-bar">
+          <div class="admin-actions">
+            <button class="act-btn act-accept" onclick="adminAction('accepted')">✅ Accepter</button>
+            <button class="act-btn act-ship"   onclick="adminAction('shipped')">📦 Livrer</button>
+            <button class="act-btn act-refuse" onclick="adminAction('refused')">❌ Refuser</button>
+          </div>
+          <div class="admin-msg-wrap">
+            <input type="text" id="admin-input" placeholder="Écris un message...">
+            <button class="btn-send" onclick="adminSend()">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  listenConversations();
+  document.getElementById('admin-input').addEventListener('keydown', e=>{ if(e.key==='Enter') adminSend(); });
+}
+
+function listenConversations(){
+  dbg('Écoute conversations','info');
+  const q = query(collection(db,'conversations'), orderBy('lastAt','desc'));
+  unsubConvs = onSnapshot(q, snap => {
+    const convs = snap.docs.map(d=>({id:d.id,...d.data()}));
+    dbg(`Conversations: ${convs.length}`,'info');
+    renderConvList(convs);
+  }, e => {
+    dbg(`Erreur convs: ${e.message}`,'error');
+  });
+}
+
+function renderConvList(convs){
+  const list = document.getElementById('conv-list');
+  const cnt  = document.getElementById('conv-count');
+  if(!list) return;
+  cnt.textContent = convs.length;
+  if(!convs.length){
+    list.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">Aucune conversation</div>';
+    return;
+  }
+  list.innerHTML = convs.map(c=>{
+    const time = c.lastAt?.toDate ? c.lastAt.toDate().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    const email = c.clientEmail||c.clientId||'Inconnu';
+    const shortEmail = email.length>22 ? email.slice(0,22)+'…' : email;
+    const isActive = selectedConv===c.clientId;
+    const statusDot = c.status==='pending' ? '<div class="unread-dot"></div>' : '';
+    return `<div class="conv-item${isActive?' active':''}" onclick="selectConv('${c.clientId}','${esc(email)}')">
+      <div class="conv-avatar">👤</div>
+      <div class="conv-info">
+        <div class="conv-email">${shortEmail}</div>
+        <div class="conv-preview">${esc(c.lastMessage||'')}</div>
+      </div>
+      <div class="conv-meta">
+        <div class="conv-time">${time}</div>
+        ${statusDot}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.selectConv = (clientId, email) => {
+  dbg(`Sélection conv: ${email}`,'info');
+  selectedConv = clientId;
+
+  // Mobile : fermer sidebar
+  document.getElementById('sidebar').classList.remove('open');
+
+  document.getElementById('no-conv').style.display    = 'none';
+  document.getElementById('active-chat').style.display= 'flex';
+  document.getElementById('admin-chat-name').textContent = email;
+
+  // Re-render conv list pour activer la sélection
+  if(unsubConvs){ /* will auto re-render on next snapshot */ }
+
+  // Écouter messages de ce client
+  if(unsubMsgs){ unsubMsgs(); unsubMsgs=null; }
+  const q = query(
+    collection(db,'conversations',clientId,'messages'),
+    orderBy('createdAt','asc')
+  );
+  unsubMsgs = onSnapshot(q, snap=>{
+    const msgs = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderAdminMessages(msgs, clientId);
+    // Fetch dernière commande pour le chip
+    fetchLastOrder(clientId);
+  });
+};
+
+window.closeSidebar = () => {
+  document.getElementById('sidebar').classList.toggle('open');
+};
+
+function renderAdminMessages(msgs, clientId){
+  const box = document.getElementById('admin-msgs');
+  if(!box) return;
+  if(!msgs.length){
+    box.innerHTML='<div class="empty-chat"><div class="ico">📭</div><p>Aucun message</p></div>';
+    return;
+  }
+  box.innerHTML = msgs.map(m=>{
+    const isMe     = m.senderId===me.uid;
+    const isSystem = m.type==='system';
+    const time     = m.createdAt?.toDate ? m.createdAt.toDate().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+    if(isSystem){
+      return `<div class="msg-row" style="align-self:center;max-width:85%;">
+        <div class="msg-bubble system">${esc(m.text)}</div>
+        <div class="msg-time" style="text-align:center;">${time}</div>
+      </div>`;
+    }
+    return `<div class="msg-row ${isMe?'me':'them'}">
+      ${!isMe?`<div class="msg-sender">👤 Client</div>`:''}
+      <div class="msg-bubble">${esc(m.text)}</div>
+      <div class="msg-time">${time}</div>
+    </div>`;
+  }).join('');
+  box.scrollTop=box.scrollHeight;
+}
+
+async function fetchLastOrder(clientId){
+  try{
+    const q = query(collection(db,'orders'),where('userId','==',clientId),orderBy('createdAt','desc'),limit(1));
+    const snap = await getDocs(q);
+    if(!snap.empty){
+      const order = {id:snap.docs[0].id,...snap.docs[0].data()};
+      renderAdminOrderChip(order);
+    }
+  }catch(e){ dbg(`fetchLastOrder: ${e.message}`,'warn'); }
+}
+
+function renderAdminOrderChip(order){
+  const chip = document.getElementById('admin-order-chip');
+  if(!chip) return;
+  const cls={pending:'chip-pending',accepted:'chip-accepted',refused:'chip-refused',shipped:'chip-shipped'};
+  const lbl={pending:'⏳ En attente',accepted:'✅ Acceptée',refused:'❌ Refusée',shipped:'📦 Livrée'};
+  chip.innerHTML=`<span class="status-chip ${cls[order.status]||'chip-pending'}" style="font-size:11px;">${order.quantity}g — ${lbl[order.status]||order.status}</span>`;
+}
+
+// Admin envoie un message texte
+window.adminSend = async () => {
+  if(!selectedConv) return toast('Sélectionne une conversation','e');
+  const input = document.getElementById('admin-input');
+  const text  = input.value.trim();
+  if(!text) return;
+  input.value='';
+  try{
+    await addDoc(collection(db,'conversations',selectedConv,'messages'),{
+      text,
+      senderId:    me.uid,
+      senderEmail: me.email,
+      type:        'admin',
+      createdAt:   serverTimestamp()
+    });
+    await setDoc(doc(db,'conversations',selectedConv),{
+      lastMessage: text,
+      lastAt:      serverTimestamp()
+    },{merge:true});
+    dbg('Message admin envoyé','success');
+  }catch(e){
+    dbg(`Erreur admin send: ${e.message}`,'error');
+    toast('Erreur envoi','e');
+  }
+};
+
+// Admin change le statut d'une commande
+window.adminAction = async (status) => {
+  if(!selectedConv) return toast('Sélectionne une conversation','e');
+  dbg(`Action: ${status} sur client ${selectedConv}`,'info');
+
+  // Récupérer la dernière commande
+  try{
+    const q = query(collection(db,'orders'),where('userId','==',selectedConv),orderBy('createdAt','desc'),limit(1));
+    const snap = await getDocs(q);
+    if(snap.empty) return toast('Aucune commande pour ce client','e');
+
+    const orderId = snap.docs[0].id;
+    const order   = snap.docs[0].data();
+
+    // Mettre à jour le statut
+    await updateDoc(doc(db,'orders',orderId),{ status, updatedAt:serverTimestamp() });
+    dbg(`Statut mis à jour: ${status}`,'success');
+
+    // Message automatique dans le chat
+    const autoMsgs = {
+      accepted: `✅ Ta commande de ${order.quantity}g a été acceptée ! On prépare ça pour toi. 🙌`,
+      shipped:  `📦 Ta commande de ${order.quantity}g est en route ! Tiens-toi prêt. 🚀`,
+      refused:  `❌ Désolé, ta commande de ${order.quantity}g a été refusée. Contacte-nous pour plus d'infos.`
+    };
+    const msgText = autoMsgs[status];
+    if(msgText){
+      await addDoc(collection(db,'conversations',selectedConv,'messages'),{
+        text:        msgText,
+        senderId:    me.uid,
+        senderEmail: me.email,
+        type:        'system',
+        orderId,
+        createdAt:   serverTimestamp()
+      });
+      await setDoc(doc(db,'conversations',selectedConv),{
+        lastMessage: msgText,
+        lastAt:      serverTimestamp(),
+        status
+      },{merge:true});
+    }
+    const labels={accepted:'✅ Acceptée',shipped:'📦 Livrée',refused:'❌ Refusée'};
+    toast(`Commande ${labels[status]||status}`,'s');
+    renderAdminOrderChip({...order, id:orderId, status});
+  }catch(e){
+    dbg(`Erreur action: ${e.message}`,'error');
+    toast('Erreur. Vérifie les règles Firestore.','e');
+  }
+};
+
+// ── UTILS ────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+</script>
+</body>
+</html>
